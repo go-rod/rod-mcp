@@ -1,6 +1,8 @@
 package types
 
 type Config struct {
+	ServerName     string `yaml:"serverName" json:"serverName"`
+	ServerVersion  string
 	BrowserBinPath string `yaml:"browserBinPath" json:"browserBinPath"`
 	Headless       bool   `yaml:"headless" json:"headless"`
 	BrowserTempDir string `yaml:"browserTempDir" json:"browserTempDir"`
@@ -10,6 +12,7 @@ type Config struct {
 
 var (
 	DefaultBrowserTempDir = "./rod/browser"
+	DefaultServerName     = "Rod Server"
 
 	DefaultConfig = Config{
 		BrowserBinPath: "",
@@ -17,5 +20,6 @@ var (
 		BrowserTempDir: DefaultBrowserTempDir,
 		NoSandbox:      false,
 		Proxy:          "",
+		ServerName:     DefaultServerName,
 	}
 )

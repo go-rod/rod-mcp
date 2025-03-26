@@ -7,6 +7,7 @@ import (
 	"github.com/go-rod/rod-mcp/types"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/input"
+	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
 	"time"
 )
@@ -127,6 +128,21 @@ var (
 				return nil, errors.New(fmt.Sprintf("Failed to press key %s: %s", string(key), err.Error()))
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Press key %s successfully", string(key))), nil
+		}
+	}
+
+	ClickHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			selector := request.Params.Arguments["selector"].(string)
+			element, err := rodCtx.Page.Element(selector)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
+			}
+			err = element.Click(proto.InputMouseButtonLeft, 1)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to click element %s: %s", selector, err.Error()))
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", selector)), nil
 		}
 	}
 )

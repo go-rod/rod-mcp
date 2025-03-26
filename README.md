@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="assets/logo.png" alt="logo" width="400" height="400">
+<img src="assets/logo2.png" alt="logo" width="400" height="400">
 
 
 <strong>Wow! It's awesome, now you can use the MCP server of Rod!🚀</strong>

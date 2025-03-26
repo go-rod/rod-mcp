@@ -16,7 +16,6 @@ type SubCfg struct {
 func RunCmd() (*SubCfg, error) {
 	subConfig := SubCfg{}
 	cli.AppHelpTemplate = fmt.Sprintf("%s\n%s", banner.ShowBanner(), cli.AppHelpTemplate)
-	fmt.Println(cli.AppHelpTemplate)
 	cmd := &cli.App{
 		Name:        "Rod MCP Server",
 		Description: "Model Context Protocol Server of Rod",

@@ -1,6 +1,20 @@
 package tools
 
-import "github.com/mark3labs/mcp-go/mcp"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/go-rod/rod-mcp/types"
+	"github.com/go-rod/rod-mcp/utils"
+	"github.com/go-rod/rod/lib/input"
+	"github.com/mark3labs/mcp-go/mcp"
+	"time"
+)
+
+const (
+	defaultWaitStableDur = 1 * time.Second
+	defaultDomDiff       = 0.2
+)
 
 var (
 	Navigation = mcp.NewTool("rod_navigate",
@@ -53,4 +67,66 @@ var (
 		mcp.WithDescription("Execute JavaScript in the browser console"),
 		mcp.WithString("script", mcp.Description("JavaScript code to execute"), mcp.Required()),
 	)
+)
+
+var (
+	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			url := request.Params.Arguments["url"].(string)
+			if !utils.IsHttp(url) {
+				return nil, errors.New("invalid URL")
+			}
+
+			err := rodCtx.Page.Navigate(url)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
+			}
+			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			return mcp.NewToolResultText(fmt.Sprintf("Navigated to %s", url)), nil
+		}
+	}
+
+	GoBackHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			err := rodCtx.Page.NavigateBack()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
+			}
+			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			return mcp.NewToolResultText("Go back successfully"), nil
+		}
+	}
+
+	GoForwardHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			err := rodCtx.Page.NavigateForward()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
+			}
+			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			return mcp.NewToolResultText("Go forward successfully"), nil
+		}
+	}
+
+	ReLoadHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			err := rodCtx.Page.Reload()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
+			}
+			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			return mcp.NewToolResultText("Reload current page successfully"), nil
+		}
+	}
+
+	PressKeyHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			key := request.Params.Arguments["key"].(rune)
+			err := rodCtx.Page.Keyboard.Type(input.Key(key))
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to press key %s: %s", string(key), err.Error()))
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Press key %s successfully", string(key))), nil
+		}
+	}
 )

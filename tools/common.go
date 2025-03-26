@@ -80,52 +80,72 @@ var (
 				return nil, errors.New("invalid URL")
 			}
 
-			err := rodCtx.Page.Navigate(url)
+			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
 			}
-			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			err = page.Navigate(url)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
+			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Navigated to %s", url)), nil
 		}
 	}
 
 	GoBackHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			err := rodCtx.Page.NavigateBack()
+			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
 			}
-			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			err = page.NavigateBack()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
+			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Go back successfully"), nil
 		}
 	}
 
 	GoForwardHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			err := rodCtx.Page.NavigateForward()
+			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
 			}
-			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			err = page.NavigateForward()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
+			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Go forward successfully"), nil
 		}
 	}
 
 	ReLoadHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			err := rodCtx.Page.Reload()
+			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
 			}
-			rodCtx.Page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
+			err = page.Reload()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
+			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Reload current page successfully"), nil
 		}
 	}
 
 	PressKeyHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to press key: %s", err.Error()))
+			}
 			key := request.Params.Arguments["key"].(rune)
-			err := rodCtx.Page.Keyboard.Type(input.Key(key))
+			err = page.Keyboard.Type(input.Key(key))
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to press key %s: %s", string(key), err.Error()))
 			}
@@ -135,8 +155,12 @@ var (
 
 	ClickHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to click element: %s", err.Error()))
+			}
 			selector := request.Params.Arguments["selector"].(string)
-			element, err := rodCtx.Page.Element(selector)
+			element, err := page.Element(selector)
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}

@@ -1,4 +1,4 @@
-package rod_mcp
+package main
 
 import (
 	"context"

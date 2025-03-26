@@ -70,6 +70,8 @@ var (
 	)
 )
 
+type ToolHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
+
 var (
 	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -144,5 +146,24 @@ var (
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", selector)), nil
 		}
+	}
+)
+
+var (
+	CommonTools = []mcp.Tool{
+		Navigation,
+		GoBack,
+		GoForward,
+		ReLoad,
+		PressKey,
+		Click,
+	}
+	CommonToolHandlers = map[string]ToolHandler{
+		"rod_navigate":   NavigationHandler,
+		"rod_go_back":    GoBackHandler,
+		"rod_go_forward": GoForwardHandler,
+		"rod_reload":     ReLoadHandler,
+		"rod_press_key":  PressKeyHandler,
+		"rod_click":      ClickHandler,
 	}
 )

@@ -12,13 +12,14 @@ import (
 const ConfigName = "rod-mcp.yaml"
 
 type Config struct {
-	ServerName     string `yaml:"serverName" json:"serverName"`
-	ServerVersion  string `yaml:"-" json:"-"`
-	BrowserBinPath string `yaml:"browserBinPath" json:"browserBinPath"`
-	Headless       bool   `yaml:"headless" json:"headless"`
-	BrowserTempDir string `yaml:"browserTempDir" json:"browserTempDir"`
-	NoSandbox      bool   `yaml:"noSandbox" json:"noSandbox"`
-	Proxy          string `yaml:"proxy" json:"proxy"`
+	ServerName     string       `yaml:"serverName" json:"serverName"`
+	ServerVersion  string       `yaml:"-" json:"-"`
+	BrowserBinPath string       `yaml:"browserBinPath" json:"browserBinPath"`
+	Headless       bool         `yaml:"headless" json:"headless"`
+	BrowserTempDir string       `yaml:"browserTempDir" json:"browserTempDir"`
+	NoSandbox      bool         `yaml:"noSandbox" json:"noSandbox"`
+	Proxy          string       `yaml:"proxy" json:"proxy"`
+	LoggerConfig   LoggerConfig `yaml:"loggerConfig" json:"loggerConfig"`
 }
 
 var (
@@ -32,6 +33,7 @@ var (
 		NoSandbox:      false,
 		Proxy:          "",
 		ServerName:     DefaultServerName,
+		LoggerConfig:   DefaultLoggerConfig,
 	}
 )
 

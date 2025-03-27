@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/types"
 	"os"
 	"os/signal"
@@ -12,7 +12,7 @@ import (
 func main() {
 	subCfg, err := RunCmd()
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -20,9 +20,12 @@ func main() {
 
 	cfg, err := types.LoadConfig(subCfg.ConfigPath)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("Load config error: %s", err)
 		return
 	}
+	// init logger
+	types.InitLogger(cfg.LoggerConfig)
+
 	if subCfg.Headless {
 		cfg.Headless = true
 	}
@@ -35,7 +38,7 @@ func main() {
 		for {
 			select {
 			case <-c:
-				fmt.Println("Rod MCP Server Interrupted by CTRL+C")
+				log.Info("Received signal, exiting...")
 				cancel()
 				return
 			}
@@ -46,7 +49,7 @@ func main() {
 	defer func() {
 		err := runner.Close()
 		if err != nil {
-			fmt.Println("Rod MCP Server Close error:", err)
+			log.Errorf("Server close error: %s", err)
 		}
 	}()
 	return

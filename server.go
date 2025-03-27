@@ -42,3 +42,7 @@ func (s *Server) Start() error {
 	}
 	return nil
 }
+
+func (s *Server) Close() error {
+	return s.ctx.Close()
+}

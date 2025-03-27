@@ -40,7 +40,7 @@ var (
 		mcp.WithString("file_path", mcp.Description("Path to save the PDF file"), mcp.Required()),
 		mcp.WithString("file_name", mcp.Description("Name of the PDF file"), mcp.Required()),
 	)
-	CloseBrowser = mcp.NewTool("rod_close",
+	CloseBrowser = mcp.NewTool("rod_close_browser",
 		mcp.WithDescription("Close the browser"),
 	)
 	Screenshot = mcp.NewTool("rod_screenshot",
@@ -191,6 +191,15 @@ var (
 			return mcp.NewToolResultText(fmt.Sprintf("Fill out element %s successfully", selector)), nil
 		}
 	}
+	CloseBrowserHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			err := rodCtx.CloseBrowser()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to close browser: %s", err.Error()))
+			}
+			return mcp.NewToolResultText("Close browser successfully"), nil
+		}
+	}
 )
 
 var (
@@ -202,14 +211,16 @@ var (
 		PressKey,
 		Click,
 		Fill,
+		CloseBrowser,
 	}
 	CommonToolHandlers = map[string]ToolHandler{
-		"rod_navigate":   NavigationHandler,
-		"rod_go_back":    GoBackHandler,
-		"rod_go_forward": GoForwardHandler,
-		"rod_reload":     ReLoadHandler,
-		"rod_press_key":  PressKeyHandler,
-		"rod_click":      ClickHandler,
-		"rod_fill":       FillHandler,
+		"rod_navigate":      NavigationHandler,
+		"rod_go_back":       GoBackHandler,
+		"rod_go_forward":    GoForwardHandler,
+		"rod_reload":        ReLoadHandler,
+		"rod_press_key":     PressKeyHandler,
+		"rod_click":         ClickHandler,
+		"rod_fill":          FillHandler,
+		"rod_close_browser": CloseBrowserHandler,
 	}
 )

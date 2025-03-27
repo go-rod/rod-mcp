@@ -42,5 +42,12 @@ func main() {
 		}
 	}()
 	runner.Run()
+
+	defer func() {
+		err := runner.Close()
+		if err != nil {
+			fmt.Println("Rod MCP Server Close error:", err)
+		}
+	}()
 	return
 }

@@ -21,7 +21,7 @@ jobs:
     - name: "Create release on GitHub"
       uses: goreleaser/goreleaser-action@v4
       with: 
-          args: "release -f .goreleaser.yaml --clean"
+          args: "release -f .goreleaser.yml --clean"
           version: latest
           workdir: .
       env: 

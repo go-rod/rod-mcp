@@ -14,7 +14,7 @@
 </div>
 
 
-<h5>Engilsh | <a href='./README_CN.md'> 中文 </a></h5>
+<h3>Engilsh | <a href='./README_CN.md'> 中文 </a></h3>
 
 
 ## Features

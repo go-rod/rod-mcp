@@ -12,8 +12,8 @@ before:
 builds:
 -
   ldflags:
-    - -s -w -X rod-mcp/banner.Version={{ .Version }}
-    - -X rod-mcp/banner.BuildTime={{ .Date }}
+    - -s -w -X github.com/go-rod/rod-mcp/banner.Version={{ .Version }}
+    - -X github.com/go-rod/rod-mcp/banner.BuildTime={{ .Date }}
   env:
     - CGO_ENABLED=0
   goos:

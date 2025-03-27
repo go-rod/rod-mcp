@@ -171,6 +171,26 @@ var (
 			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", selector)), nil
 		}
 	}
+
+	FillHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to fill out element: %s", err.Error()))
+			}
+			selector := request.Params.Arguments["selector"].(string)
+			value := request.Params.Arguments["value"].(string)
+			element, err := page.Element(selector)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
+			}
+			err = element.Input(value)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to fill out element %s: %s", selector, err.Error()))
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Fill out element %s successfully", selector)), nil
+		}
+	}
 )
 
 var (
@@ -181,6 +201,7 @@ var (
 		ReLoad,
 		PressKey,
 		Click,
+		Fill,
 	}
 	CommonToolHandlers = map[string]ToolHandler{
 		"rod_navigate":   NavigationHandler,
@@ -189,5 +210,6 @@ var (
 		"rod_reload":     ReLoadHandler,
 		"rod_press_key":  PressKeyHandler,
 		"rod_click":      ClickHandler,
+		"rod_fill":       FillHandler,
 	}
 )

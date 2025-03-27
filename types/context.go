@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
@@ -69,11 +70,12 @@ func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
 }
 
 type Context struct {
-	stdContext  context.Context
-	config      Config
-	browser     *rod.Browser
-	Page        *rod.Page
-	initialOnce sync.Once
+	stdContext context.Context
+	config     Config
+	browser    *rod.Browser
+	page       *rod.Page
+	stateLock  sync.Mutex
+	isInitial  atomic.Bool
 }
 
 func NewContext(ctx context.Context, cfg Config) *Context {
@@ -87,24 +89,79 @@ func (ctx *Context) EnsurePage() (*rod.Page, error) {
 	if err := ctx.initial(); err != nil {
 		return nil, err
 	}
-	return ctx.Page, nil
+	return ctx.page, nil
 
 }
 
 func (ctx *Context) initial() error {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+
 	var err error
-	ctx.initialOnce.Do(func() {
+	if ctx.browser == nil {
 		ctx.browser, err = launchBrowser(ctx.stdContext, ctx.config)
 		if err != nil {
-			return
+			return err
 		}
-		ctx.Page, err = ctx.createPage()
+		ctx.page, err = ctx.createPage()
 		if err != nil {
-			return
+			return err
 		}
-	})
+		return nil
+
+	}
+	if ctx.page == nil {
+		ctx.page, err = ctx.createPage()
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 
+}
+
+func (ctx *Context) ClosePage() error {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	return ctx.closePage()
+}
+
+func (ctx *Context) CloseBrowser() error {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	return ctx.closeBrowser()
+
+}
+
+func (ctx *Context) closePage() error {
+	if ctx.page == nil {
+		return nil
+	}
+	err := ctx.page.Close()
+	if err != nil {
+		return errors.Wrap(err, "close page failed")
+	}
+	ctx.page = nil
+	return err
+}
+func (ctx *Context) closeBrowser() error {
+
+	err := ctx.closePage()
+	if err != nil {
+		return err
+	}
+
+	if ctx.browser == nil {
+		return nil
+	}
+
+	err = ctx.browser.Close()
+	if err != nil {
+		return errors.Wrap(err, "close browser failed")
+	}
+	ctx.browser = nil
+	return nil
 }
 
 func (ctx *Context) createPage(urls ...string) (*rod.Page, error) {
@@ -113,4 +170,14 @@ func (ctx *Context) createPage(urls ...string) (*rod.Page, error) {
 		return nil, errors.Wrap(err, "create page failed")
 	}
 	return page, nil
+}
+
+// Close the browser
+// PS: This method only used because of server exit
+func (ctx *Context) Close() error {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	ctx.closeBrowser()
+	return nil
+
 }

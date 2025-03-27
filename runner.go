@@ -28,3 +28,7 @@ func (r *Runner) Run() {
 		fmt.Println("Rod MCP Server start error:", err)
 	}
 }
+
+func (r *Runner) Close() error {
+	return r.server.Close()
+}

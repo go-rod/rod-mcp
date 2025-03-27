@@ -55,7 +55,8 @@ go build
 
 ### 基本使用
 
-1. 配置 MCP：
+1. 克隆仓库自行编译 或 [去直接下载二进制文件](https://github.com/go-rod/rod-mcp/releases)
+2. 配置 MCP：
 ```json
 {
     "mcpServers": {

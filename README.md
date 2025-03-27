@@ -59,7 +59,8 @@ go build
 
 ### Basic Usage
 
-1. Configure MCP:
+1. Clone Repo and Build Self or [Go to Download Release](https://github.com/go-rod/rod-mcp/releases)
+2. Configure MCP:
 ```json
 {
     "mcpServers": {

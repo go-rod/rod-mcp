@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/types"
 )
 
@@ -25,7 +25,7 @@ func NewRunner(ctx context.Context, cfg types.Config) *Runner {
 func (r *Runner) Run() {
 	err := r.server.Start()
 	if err != nil {
-		fmt.Println("Rod MCP Server start error:", err)
+		log.Errorf("Server start error: %s", err)
 	}
 }
 

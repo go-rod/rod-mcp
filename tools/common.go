@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/types"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/input"
@@ -77,15 +78,18 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			url := request.Params.Arguments["url"].(string)
 			if !utils.IsHttp(url) {
+				log.Errorf("Invalid URL: %s", url)
 				return nil, errors.New("invalid URL")
 			}
 
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to navigate to %s: %s", url, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
 			}
 			err = page.Navigate(url)
 			if err != nil {
+				log.Errorf("Failed to navigate to %s: %s", url, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
 			}
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
@@ -97,10 +101,12 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to go back: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
 			}
 			err = page.NavigateBack()
 			if err != nil {
+				log.Errorf("Failed to go back: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
 			}
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
@@ -112,10 +118,12 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to go forward: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
 			}
 			err = page.NavigateForward()
 			if err != nil {
+				log.Errorf("Failed to go forward: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
 			}
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
@@ -127,10 +135,12 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to reload current page: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
 			}
 			err = page.Reload()
 			if err != nil {
+				log.Errorf("Failed to reload current page: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
 			}
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
@@ -142,11 +152,13 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to press key: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to press key: %s", err.Error()))
 			}
 			key := request.Params.Arguments["key"].(rune)
 			err = page.Keyboard.Type(input.Key(key))
 			if err != nil {
+				log.Errorf("Failed to press key %s: %s", string(key), err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to press key %s: %s", string(key), err.Error()))
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Press key %s successfully", string(key))), nil
@@ -157,15 +169,18 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to click element: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to click element: %s", err.Error()))
 			}
 			selector := request.Params.Arguments["selector"].(string)
 			element, err := page.Element(selector)
 			if err != nil {
+				log.Errorf("Failed to find element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}
 			err = element.Click(proto.InputMouseButtonLeft, 1)
 			if err != nil {
+				log.Errorf("Failed to click element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to click element %s: %s", selector, err.Error()))
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", selector)), nil
@@ -176,16 +191,19 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
+				log.Errorf("Failed to fill out element: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to fill out element: %s", err.Error()))
 			}
 			selector := request.Params.Arguments["selector"].(string)
 			value := request.Params.Arguments["value"].(string)
 			element, err := page.Element(selector)
 			if err != nil {
+				log.Errorf("Failed to find element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}
 			err = element.Input(value)
 			if err != nil {
+				log.Errorf("Failed to fill out element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to fill out element %s: %s", selector, err.Error()))
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Fill out element %s successfully", selector)), nil
@@ -195,6 +213,7 @@ var (
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			err := rodCtx.CloseBrowser()
 			if err != nil {
+				log.Errorf("Failed to close browser: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to close browser: %s", err.Error()))
 			}
 			return mcp.NewToolResultText("Close browser successfully"), nil

@@ -1,0 +1,50 @@
+
+gomod:
+  proxy: true
+  env:
+    - GOPROXY=https://goproxy.cn,direct
+    - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+-
+  ldflags:
+    - -s -w -X rod-mcp/banner.Version={{ .Version }}
+    - -X rod-mcp/banner.BuildTime={{ .Date }}
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - windows
+    - linux
+    - darwin
+  goarch:
+    - amd64
+    - 386
+    - arm
+    - arm64
+
+  ignore:
+    - goos: darwin
+      goarch: '386'
+    - goos: windows
+      goarch: 'arm'
+    - goos: windows
+      goarch: 'arm64'
+
+  binary: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+  main: "."
+
+dockers:
+-
+
+archives:
+- id: Rod MCP
+  format: zip
+  name_template: '{{ .ProjectName }}_{{ .Version }}_{{- if eq .Os "darwin" }}macOS_{{ .Arch }} {{- else }}{{ .Os }}_{{ .Arch }}{{ end }}'
+
+checksum:
+  algorithm: sha256
+  name_template: "{{ .ProjectName }}-linux-checksums.txt"

@@ -15,7 +15,6 @@ type SubCfg struct {
 
 func RunCmd() (*SubCfg, error) {
 	subConfig := SubCfg{}
-	cli.AppHelpTemplate = fmt.Sprintf("%s\n%s", banner.ShowBanner(), cli.AppHelpTemplate)
 	cmd := &cli.App{
 		Name:        "Rod MCP Server",
 		Description: "Model Context Protocol Server of Rod",
@@ -35,6 +34,18 @@ func RunCmd() (*SubCfg, error) {
 				Usage:       "use to enable headless,if false browser will shown window",
 				Destination: &subConfig.Headless,
 			},
+			&cli.BoolFlag{
+				Name:    "no-banner",
+				Aliases: []string{"nb"},
+				Usage:   "use to disable show banner",
+			},
+		},
+		Before: func(c *cli.Context) error {
+			if !c.Bool("no-banner") {
+				fmt.Println(banner.ShowBanner())
+			}
+
+			return nil
 		},
 		Action: func(c *cli.Context) error {
 			if c.Bool("headless") {

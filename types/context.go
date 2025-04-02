@@ -3,14 +3,15 @@ package types
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/pkg/errors"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
@@ -74,6 +75,7 @@ type Context struct {
 	config     Config
 	browser    *rod.Browser
 	page       *rod.Page
+	element    *rod.Element
 	stateLock  sync.Mutex
 	isInitial  atomic.Bool
 }
@@ -85,12 +87,23 @@ func NewContext(ctx context.Context, cfg Config) *Context {
 	}
 }
 
+func (ctx *Context) EnsureNewPage(url string) (*rod.Page, error) {
+	if err := ctx.initial(); err != nil {
+		return nil, err
+	}
+	p, err := ctx.browser.Page(proto.TargetCreateTarget{URL: url})
+	if err != nil {
+		return nil, err
+	}
+	ctx.page = p
+	return ctx.page, nil
+}
+
 func (ctx *Context) EnsurePage() (*rod.Page, error) {
 	if err := ctx.initial(); err != nil {
 		return nil, err
 	}
 	return ctx.page, nil
-
 }
 
 func (ctx *Context) initial() error {
@@ -108,7 +121,6 @@ func (ctx *Context) initial() error {
 			return err
 		}
 		return nil
-
 	}
 	if ctx.page == nil {
 		ctx.page, err = ctx.createPage()
@@ -146,7 +158,6 @@ func (ctx *Context) closePage() error {
 	return err
 }
 func (ctx *Context) closeBrowser() error {
-
 	err := ctx.closePage()
 	if err != nil {
 		return err
@@ -179,5 +190,4 @@ func (ctx *Context) Close() error {
 	defer ctx.stateLock.Unlock()
 	ctx.closeBrowser()
 	return nil
-
 }

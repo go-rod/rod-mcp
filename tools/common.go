@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -108,7 +110,7 @@ var (
 				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
 			}
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
-			return mcp.NewToolResultText(fmt.Sprintf("New tab created with url: %s", page.MustInfo().URL)), nil
+			return mcp.NewToolResultText(fmt.Sprintf("New tab created with url: %s", url)), nil
 		}
 	}
 	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -236,7 +238,7 @@ var (
 			}
 			selector := request.Params.Arguments["selector"].(string)
 			value := request.Params.Arguments["value"].(string)
-			element, err := page.Context(ctx).Element(selector)
+			element, err := page.Element(selector)
 			if err != nil {
 				log.Errorf("Failed to find element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
@@ -244,7 +246,7 @@ var (
 			if element == nil || element.Object == nil {
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}
-			err = element.Context(ctx).Input(value)
+			err = element.Input(value)
 			if err != nil {
 				log.Errorf("Failed to fill out element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to fill out element %s: %s", selector, err.Error()))
@@ -300,11 +302,21 @@ var (
 			if err != nil {
 				log.Errorf("Failed to screenshot: %s", err.Error())
 			}
-			_ = page.MustScreenshot(request.Params.Arguments["name"].(string))
+			req := &proto.PageCaptureScreenshot{
+				Format: proto.PageCaptureScreenshotFormatPng,
+			}
+			bin, err := page.Screenshot(false, req)
 			if err != nil {
 				log.Errorf("Failed to screenshot: %s", err.Error())
 			}
-			return mcp.NewToolResultText(fmt.Sprintf("Save to %s", request.Params.Arguments["name"].(string))), nil
+			fileName := request.Params.Arguments["name"].(string)
+			toFile := []string{"tmp", "screenshots", fileName + ".png"}
+			filePath := filepath.Join(toFile...)
+			err = os.WriteFile(filePath, bin, 0o664)
+			if err != nil {
+				log.Errorf("Failed to screenshot: %s", err.Error())
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Save to %s", filePath)), nil
 		}
 	}
 )

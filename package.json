@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "dev": "npx terser .\\types\\js\\snapshotter_raw.js -o .\\types\\js\\snapshotter.js -c dead_code=true,arguments=true,arrows=true -m reserved=[snapshotEngine],toplevel"
+  },
+  "dependencies": {
+    "terser": "^5.16.5"
+  }
+}

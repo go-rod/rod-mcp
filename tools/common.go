@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/types"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
-	"time"
 )
 
 const (
@@ -18,56 +21,71 @@ const (
 	defaultDomDiff       = 0.2
 )
 
+const (
+	NavigationToolKey   = "rod_navigate"
+	GoBackToolKey       = "rod_go_back"
+	GoForwardToolKey    = "rod_go_forward"
+	ReloadToolKey       = "rod_reload"
+	PressKeyToolKey     = "rod_press"
+	ClickToolKey        = "rod_click"
+	FillToolKey         = "rod_fill"
+	PdfToolKey          = "rod_pdf"
+	ScreenshotToolKey   = "rod_screenshot"
+	EvaluateToolKey     = "rod_evaluate"
+	CloseBrowserToolKey = "rod_close_browser"
+	SelectorToolKey     = "rod_selector"
+)
+
 var (
 	Navigation = mcp.NewTool("rod_navigate",
 		mcp.WithDescription("Navigate to a URL"),
 		mcp.WithString("url", mcp.Description("URL to navigate to"), mcp.Required()),
 	)
-	GoBack = mcp.NewTool("rod_go_back",
+	GoBack = mcp.NewTool(GoBackToolKey,
 		mcp.WithDescription("Go back in the browser history, go back to the previous page"),
 	)
-	GoForward = mcp.NewTool("rod_go_forward",
+	GoForward = mcp.NewTool(GoForwardToolKey,
 		mcp.WithDescription("Go forward in the browser history, go to the next page"),
 	)
-	ReLoad = mcp.NewTool("rod_reload",
+	ReLoad = mcp.NewTool(ReloadToolKey,
 		mcp.WithDescription("Reload the current page"),
 	)
-	PressKey = mcp.NewTool("rod_press_key",
+	PressKey = mcp.NewTool(PressKeyToolKey,
 		mcp.WithDescription("Press a key on the keyboard"),
 		mcp.WithString("key", mcp.Description("Name of the key to press or a character to generate, such as `ArrowLeft` or `a`"), mcp.Required()),
 	)
-	Pdf = mcp.NewTool("rod_pdf",
+	Pdf = mcp.NewTool(PdfToolKey,
 		mcp.WithDescription("Generate a PDF from the current page"),
 		mcp.WithString("file_path", mcp.Description("Path to save the PDF file"), mcp.Required()),
 		mcp.WithString("file_name", mcp.Description("Name of the PDF file"), mcp.Required()),
 	)
-	CloseBrowser = mcp.NewTool("rod_close_browser",
+	CloseBrowser = mcp.NewTool(CloseBrowserToolKey,
 		mcp.WithDescription("Close the browser"),
 	)
-	Screenshot = mcp.NewTool("rod_screenshot",
+	Screenshot = mcp.NewTool(ScreenshotToolKey,
 		mcp.WithDescription("Take a screenshot of the current page or a specific element"),
 		mcp.WithString("name", mcp.Description("Name of the screenshot"), mcp.Required()),
 		mcp.WithString("selector", mcp.Description("CSS selector of the element to take a screenshot of")),
 		mcp.WithNumber("width", mcp.Description("Width in pixels (default: 800)")),
 		mcp.WithNumber("height", mcp.Description("Height in pixels (default: 600)")),
 	)
-	Click = mcp.NewTool("rod_click",
+	Click = mcp.NewTool(ClickToolKey,
 		mcp.WithDescription("Click an element on the page"),
 		mcp.WithString("selector", mcp.Description("CSS selector of the element to click"), mcp.Required()),
 	)
-	Fill = mcp.NewTool("rod_fill",
+	Fill = mcp.NewTool(FillToolKey,
 		mcp.WithDescription("Fill out an input field"),
 		mcp.WithString("selector", mcp.Description("CSS selector of the element to type into"), mcp.Required()),
 		mcp.WithString("value", mcp.Description("Value to fill"), mcp.Required()),
 	)
-	Selector = mcp.NewTool("rod_selector",
+	Selector = mcp.NewTool(SelectorToolKey,
 		mcp.WithDescription("Select an element on the page with Select tag"),
 		mcp.WithString("selector", mcp.Description("CSS selector for element to select"), mcp.Required()),
 		mcp.WithString("value", mcp.Description("Value to select"), mcp.Required()),
 	)
-	Evaluate = mcp.NewTool("rod_evaluate",
+	Evaluate = mcp.NewTool(EvaluateToolKey,
 		mcp.WithDescription("Execute JavaScript in the browser console"),
-		mcp.WithString("script", mcp.Description("JavaScript code to execute"), mcp.Required()),
+		mcp.WithString("script", mcp.Description("A function name or an unnamed function definition"), mcp.Required()),
 	)
 )
 
@@ -219,6 +237,61 @@ var (
 			return mcp.NewToolResultText("Close browser successfully"), nil
 		}
 	}
+	EvaluateHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				log.Errorf("Failed to evaluate: %s", err.Error())
+			}
+			script := request.Params.Arguments["script"].(string)
+			r, err := proto.RuntimeEvaluate{
+				Expression:            script,
+				ObjectGroup:           "console",
+				IncludeCommandLineAPI: true,
+			}.Call(page)
+			if err != nil {
+				log.Errorf("Failed to evaluate code: %s", err.Error())
+				return nil, errors.New(fmt.Sprintf("Failed to evaluate code: %s", err.Error()))
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Evaluate code successfully with result: %s", r.Result.Value.String())), nil
+		}
+	}
+	SelectorHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				log.Errorf("Failed to select: %s", err.Error())
+			}
+			res, err := page.Element(request.Params.Arguments["selector"].(string))
+			if err != nil {
+				log.Errorf("Failed to select: %s", err.Error())
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("The object's id matched: %s, plain text is: %s", res.Object.ObjectID, res.String())), nil
+		}
+	}
+	ScreenshotHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.EnsurePage()
+			if err != nil {
+				log.Errorf("Failed to screenshot: %s", err.Error())
+			}
+			req := &proto.PageCaptureScreenshot{
+				Format: proto.PageCaptureScreenshotFormatPng,
+			}
+			bin, err := page.Screenshot(false, req)
+			if err != nil {
+				log.Errorf("Failed to screenshot: %s", err.Error())
+			}
+			fileName := request.Params.Arguments["name"].(string)
+			toFile := []string{"tmp", "screenshots", fileName + ".png"}
+			filePath := filepath.Join(toFile...)
+			err = os.WriteFile(filePath, bin, 0o664)
+			if err != nil {
+				log.Errorf("Failed to screenshot: %s", err.Error())
+			}
+			return mcp.NewToolResultText(fmt.Sprintf("Save to %s", filePath)), nil
+		}
+	}
 )
 
 var (
@@ -231,15 +304,23 @@ var (
 		Click,
 		Fill,
 		CloseBrowser,
+		Pdf,
+		Screenshot,
+		Selector,
+		Evaluate,
 	}
 	CommonToolHandlers = map[string]ToolHandler{
-		"rod_navigate":      NavigationHandler,
-		"rod_go_back":       GoBackHandler,
-		"rod_go_forward":    GoForwardHandler,
-		"rod_reload":        ReLoadHandler,
-		"rod_press_key":     PressKeyHandler,
-		"rod_click":         ClickHandler,
-		"rod_fill":          FillHandler,
-		"rod_close_browser": CloseBrowserHandler,
+		NavigationToolKey: NavigationHandler,
+		GoBackToolKey:     GoBackHandler,
+		GoForwardToolKey:  GoForwardHandler,
+		ReloadToolKey:     ReLoadHandler,
+		PressKeyToolKey:   PressKeyHandler,
+		ClickToolKey:      ClickHandler,
+		FillToolKey:       FillHandler,
+		//PdfToolKey:          PdfHandler,
+		ScreenshotToolKey:   ScreenshotHandler,
+		EvaluateToolKey:     EvaluateHandler,
+		CloseBrowserToolKey: CloseBrowserHandler,
+		SelectorToolKey:     SelectorHandler,
 	}
 )

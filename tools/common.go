@@ -22,7 +22,6 @@ const (
 )
 
 const (
-	CreateTabToolKey    = "rod_create_tab"
 	NavigationToolKey   = "rod_navigate"
 	GoBackToolKey       = "rod_go_back"
 	GoForwardToolKey    = "rod_go_forward"
@@ -38,11 +37,7 @@ const (
 )
 
 var (
-	CreateTab = mcp.NewTool(CreateTabToolKey,
-		mcp.WithDescription("Create a new tab default about:blank"),
-		mcp.WithString("url", mcp.Description("URL to navigate in new tab")),
-	)
-	Navigation = mcp.NewTool(NavigationToolKey,
+	Navigation = mcp.NewTool("rod_navigate",
 		mcp.WithDescription("Navigate to a URL"),
 		mcp.WithString("url", mcp.Description("URL to navigate to"), mcp.Required()),
 	)
@@ -97,22 +92,6 @@ var (
 type ToolHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
 
 var (
-	CreateTabHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			url := request.Params.Arguments["url"].(string)
-			if url != "" && !utils.IsHttp(url) {
-				log.Errorf("Invalid URL: %s", url)
-				return nil, errors.New("invalid URL")
-			}
-			page, err := rodCtx.EnsureNewPage(url)
-			if err != nil {
-				log.Errorf("Failed to navigate to %s: %s", url, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to navigate to %s: %s", url, err.Error()))
-			}
-			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
-			return mcp.NewToolResultText(fmt.Sprintf("New tab created with url: %s", url)), nil
-		}
-	}
 	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			url := request.Params.Arguments["url"].(string)
@@ -323,7 +302,6 @@ var (
 
 var (
 	CommonTools = []mcp.Tool{
-		CreateTab,
 		Navigation,
 		GoBack,
 		GoForward,
@@ -338,7 +316,6 @@ var (
 		Evaluate,
 	}
 	CommonToolHandlers = map[string]ToolHandler{
-		CreateTabToolKey:  CreateTabHandler,
 		NavigationToolKey: NavigationHandler,
 		GoBackToolKey:     GoBackHandler,
 		GoForwardToolKey:  GoForwardHandler,

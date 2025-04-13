@@ -87,18 +87,6 @@ func NewContext(ctx context.Context, cfg Config) *Context {
 	}
 }
 
-func (ctx *Context) EnsureNewPage(url string) (*rod.Page, error) {
-	if err := ctx.initial(); err != nil {
-		return nil, err
-	}
-	p, err := ctx.browser.Page(proto.TargetCreateTarget{URL: url})
-	if err != nil {
-		return nil, err
-	}
-	ctx.page = p
-	return ctx.page, nil
-}
-
 func (ctx *Context) EnsurePage() (*rod.Page, error) {
 	if err := ctx.initial(); err != nil {
 		return nil, err

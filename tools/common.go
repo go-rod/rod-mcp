@@ -4,16 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"time"
-
 	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/types"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 const (
@@ -27,8 +26,6 @@ const (
 	GoForwardToolKey    = "rod_go_forward"
 	ReloadToolKey       = "rod_reload"
 	PressKeyToolKey     = "rod_press"
-	ClickToolKey        = "rod_click"
-	FillToolKey         = "rod_fill"
 	PdfToolKey          = "rod_pdf"
 	ScreenshotToolKey   = "rod_screenshot"
 	EvaluateToolKey     = "rod_evaluate"
@@ -69,15 +66,6 @@ var (
 		mcp.WithNumber("width", mcp.Description("Width in pixels (default: 800)")),
 		mcp.WithNumber("height", mcp.Description("Height in pixels (default: 600)")),
 	)
-	Click = mcp.NewTool(ClickToolKey,
-		mcp.WithDescription("Click an element on the page"),
-		mcp.WithString("selector", mcp.Description("CSS selector of the element to click"), mcp.Required()),
-	)
-	Fill = mcp.NewTool(FillToolKey,
-		mcp.WithDescription("Fill out an input field"),
-		mcp.WithString("selector", mcp.Description("CSS selector of the element to type into"), mcp.Required()),
-		mcp.WithString("value", mcp.Description("Value to fill"), mcp.Required()),
-	)
 	Selector = mcp.NewTool(SelectorToolKey,
 		mcp.WithDescription("Select an element on the page with Select tag"),
 		mcp.WithString("selector", mcp.Description("CSS selector for element to select"), mcp.Required()),
@@ -88,8 +76,6 @@ var (
 		mcp.WithString("script", mcp.Description("A function name or an unnamed function definition"), mcp.Required()),
 	)
 )
-
-type ToolHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
 
 var (
 	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -182,51 +168,6 @@ var (
 			return mcp.NewToolResultText(fmt.Sprintf("Press key %s successfully", string(key))), nil
 		}
 	}
-
-	ClickHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
-			if err != nil {
-				log.Errorf("Failed to click element: %s", err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to click element: %s", err.Error()))
-			}
-			selector := request.Params.Arguments["selector"].(string)
-			element, err := page.Element(selector)
-			if err != nil {
-				log.Errorf("Failed to find element %s: %s", selector, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
-			}
-			err = element.Click(proto.InputMouseButtonLeft, 1)
-			if err != nil {
-				log.Errorf("Failed to click element %s: %s", selector, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to click element %s: %s", selector, err.Error()))
-			}
-			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", selector)), nil
-		}
-	}
-
-	FillHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
-			if err != nil {
-				log.Errorf("Failed to fill out element: %s", err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to fill out element: %s", err.Error()))
-			}
-			selector := request.Params.Arguments["selector"].(string)
-			value := request.Params.Arguments["value"].(string)
-			element, err := page.Element(selector)
-			if err != nil {
-				log.Errorf("Failed to find element %s: %s", selector, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
-			}
-			err = element.Input(value)
-			if err != nil {
-				log.Errorf("Failed to fill out element %s: %s", selector, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to fill out element %s: %s", selector, err.Error()))
-			}
-			return mcp.NewToolResultText(fmt.Sprintf("Fill out element %s successfully", selector)), nil
-		}
-	}
 	CloseBrowserHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			err := rodCtx.CloseBrowser()
@@ -308,6 +249,7 @@ var (
 		Screenshot,
 		Selector,
 		Evaluate,
+		Snapshot,
 	}
 	CommonToolHandlers = map[string]ToolHandler{
 		NavigationToolKey: NavigationHandler,
@@ -322,5 +264,6 @@ var (
 		EvaluateToolKey:     EvaluateHandler,
 		CloseBrowserToolKey: CloseBrowserHandler,
 		SelectorToolKey:     SelectorHandler,
+		SnapshotToolKey:     SnapshotHandler,
 	}
 )

@@ -196,9 +196,6 @@ var (
 				log.Errorf("Failed to find element %s: %s", selector, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}
-			if element == nil || element.Object == nil {
-				return nil, errors.New(fmt.Sprintf("Failed to find element: %s", selector))
-			}
 			err = element.Click(proto.InputMouseButtonLeft, 1)
 			if err != nil {
 				log.Errorf("Failed to click element %s: %s", selector, err.Error())
@@ -220,9 +217,6 @@ var (
 			element, err := page.Element(selector)
 			if err != nil {
 				log.Errorf("Failed to find element %s: %s", selector, err.Error())
-				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
-			}
-			if element == nil || element.Object == nil {
 				return nil, errors.New(fmt.Sprintf("Failed to find element %s: %s", selector, err.Error()))
 			}
 			err = element.Input(value)

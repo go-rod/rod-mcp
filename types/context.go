@@ -75,7 +75,6 @@ type Context struct {
 	config     Config
 	browser    *rod.Browser
 	page       *rod.Page
-	element    *rod.Element
 	stateLock  sync.Mutex
 	isInitial  atomic.Bool
 }

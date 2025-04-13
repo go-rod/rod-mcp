@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/go-rod/rod"
+	"github.com/go-rod/rod-mcp/types/js"
 	"github.com/go-rod/rod-mcp/utils"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
@@ -77,6 +78,7 @@ type Context struct {
 	page       *rod.Page
 	stateLock  sync.Mutex
 	isInitial  atomic.Bool
+	snapshot   *Snapshot
 }
 
 func NewContext(ctx context.Context, cfg Config) *Context {
@@ -89,6 +91,15 @@ func NewContext(ctx context.Context, cfg Config) *Context {
 func (ctx *Context) EnsurePage() (*rod.Page, error) {
 	if err := ctx.initial(); err != nil {
 		return nil, err
+	}
+	return ctx.page, nil
+}
+
+func (ctx *Context) ControlledPage() (*rod.Page, error) {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	if ctx.page == nil {
+		return nil, errors.New("No tab to used, call rod_navigate first")
 	}
 	return ctx.page, nil
 }
@@ -124,6 +135,30 @@ func (ctx *Context) ClosePage() error {
 	ctx.stateLock.Lock()
 	defer ctx.stateLock.Unlock()
 	return ctx.closePage()
+}
+
+func (ctx *Context) BuildSnapshot() (string, error) {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	if ctx.page == nil {
+		return "", errors.New("No tab to capture snapshot, call rod_navigate first")
+	}
+	snapshot, err := BuildSnapshot(ctx.page)
+	if err != nil {
+		return "", err
+	}
+	ctx.snapshot = snapshot
+	return snapshot.String(), nil
+}
+
+func (ctx *Context) LatestSnapshot() (*Snapshot, error) {
+	ctx.stateLock.Lock()
+	defer ctx.stateLock.Unlock()
+	if ctx.snapshot == nil {
+		return nil, errors.New("No snapshot to used, call rod_snapshot first")
+	}
+	return ctx.snapshot, nil
+
 }
 
 func (ctx *Context) CloseBrowser() error {
@@ -164,6 +199,7 @@ func (ctx *Context) closeBrowser() error {
 
 func (ctx *Context) createPage(urls ...string) (*rod.Page, error) {
 	page, err := ctx.browser.Page(proto.TargetCreateTarget{URL: strings.Join(urls, "/")})
+	page.EvalOnNewDocument(js.InjectedSnapShot)
 	if err != nil {
 		return nil, errors.Wrap(err, "create page failed")
 	}

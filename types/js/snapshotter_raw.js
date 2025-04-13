@@ -1136,7 +1136,7 @@ class SnapshotEngine {
 
         const queryRes = this._lastAriaSnapshot?.elements?.get(+eleId);
 
-        return queryRes && queryRes.isConnected ? [queryRes] : [];
+        return queryRes && queryRes.isConnected ? [queryRes][0] : null;
     }
 
 
@@ -1482,8 +1482,12 @@ class SnapshotEngine {
     }
 
     ariaSnapshot(node, options) {
-        if (node.nodeType !== Node.ELEMENT_NODE)
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            console.log('ariaSnapshot only works on elements.')
             return;
+        }
+        console.log(node, options)
+
         const generation = (this._lastAriaSnapshot?.generation || 0) + 1;
         this._lastAriaSnapshot = this.generateAriaTree(node, generation, options?.ref ?? false);
         return this.renderAriaTree(this._lastAriaSnapshot, options);

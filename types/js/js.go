@@ -5,8 +5,8 @@ import _ "embed"
 //go:embed snapshotter.js
 var InjectedSnapShot string
 
-const AriaSnapshot = "(node, opts) => {return snapshotEngine.ariaSnapshot(node,opts);}"
+const AriaSnapshot = "function(node, opts) { return snapshotEngine.ariaSnapshot(eval(node), eval(opts)); }"
 
-const queryEleByAria = `(selector) => {
+const QueryEleByAria = `(selector) => {
     return snapshotEngine.queryAll(selector);
 }`

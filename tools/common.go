@@ -30,7 +30,6 @@ const (
 	ScreenshotToolKey   = "rod_screenshot"
 	EvaluateToolKey     = "rod_evaluate"
 	CloseBrowserToolKey = "rod_close_browser"
-	SelectorToolKey     = "rod_selector"
 )
 
 var (
@@ -65,11 +64,6 @@ var (
 		mcp.WithString("selector", mcp.Description("CSS selector of the element to take a screenshot of")),
 		mcp.WithNumber("width", mcp.Description("Width in pixels (default: 800)")),
 		mcp.WithNumber("height", mcp.Description("Height in pixels (default: 600)")),
-	)
-	Selector = mcp.NewTool(SelectorToolKey,
-		mcp.WithDescription("Select an element on the page with Select tag"),
-		mcp.WithString("selector", mcp.Description("CSS selector for element to select"), mcp.Required()),
-		mcp.WithString("value", mcp.Description("Value to select"), mcp.Required()),
 	)
 	Evaluate = mcp.NewTool(EvaluateToolKey,
 		mcp.WithDescription("Execute JavaScript in the browser console"),
@@ -195,19 +189,6 @@ var (
 				return nil, errors.New(fmt.Sprintf("Failed to evaluate code: %s", err.Error()))
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Evaluate code successfully with result: %s", r.Result.Value.String())), nil
-		}
-	}
-	SelectorHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
-			if err != nil {
-				log.Errorf("Failed to select: %s", err.Error())
-			}
-			res, err := page.Element(request.Params.Arguments["selector"].(string))
-			if err != nil {
-				log.Errorf("Failed to select: %s", err.Error())
-			}
-			return mcp.NewToolResultText(fmt.Sprintf("The object's id matched: %s, plain text is: %s", res.Object.ObjectID, res.String())), nil
 		}
 	}
 	ScreenshotHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {

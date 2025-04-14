@@ -164,7 +164,7 @@ func (s *Snapshot) walk(node *yaml.Node, frameIndex int, frame *rod.Page) (*yaml
 					if len(childSnapshot.Content) == 0 {
 						pairNode.Content = []*yaml.Node{
 							{Kind: yaml.ScalarNode, Value: node.Value},
-							nil,
+							{Kind: yaml.ScalarNode, Value: "<could not capture iframe snapshot>"},
 						}
 					} else {
 						pairNode.Content = []*yaml.Node{

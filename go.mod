@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/log v0.4.1
 	github.com/go-rod/rod v0.116.2
-	github.com/mark3labs/mcp-go v0.16.0
+	github.com/mark3labs/mcp-go v0.20.1
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.27.6
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

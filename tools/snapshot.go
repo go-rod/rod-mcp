@@ -10,6 +10,7 @@ import (
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 	"github.com/pkg/errors"
 )
 
@@ -47,8 +48,8 @@ var (
 )
 
 var (
-	SnapshotHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	SnapshotHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			snapshot, err := rodCtx.BuildSnapshot()
 			if err != nil {
 				return nil, errors.Wrapf(err, "Failed to capture snapshoot")
@@ -57,11 +58,12 @@ var (
 			return mcp.NewToolResultText(snapshot), nil
 
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: false})
 	}
 
-	ClickHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			_, err := rodCtx.ControlledPage()
+	ClickHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.ControlledPage()
 			ele := request.Params.Arguments["element"].(string)
 			if err != nil {
 				log.Errorf("Failed to click element: %s", err.Error())
@@ -85,13 +87,16 @@ var (
 				log.Errorf("Failed to click element %s: %s", ele, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to click element %s: %s", ele, err.Error()))
 			}
+
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Click element %s successfully", ele)), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: true})
 	}
 
-	FillHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			_, err := rodCtx.ControlledPage()
+	FillHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.ControlledPage()
 			ele := request.Params.Arguments["element"].(string)
 			if err != nil {
 				log.Errorf("Failed to fill out element %s: %s", ele, err.Error())
@@ -125,13 +130,16 @@ var (
 					return nil, errors.New(fmt.Sprintf("Failed to submit element %s: %s", ele, err.Error()))
 				}
 			}
+
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Fill out element %s successfully", ele)), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: true})
 	}
 
-	SelectorHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			_, err := rodCtx.ControlledPage()
+	SelectorHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			page, err := rodCtx.ControlledPage()
 			ele := request.Params.Arguments["element"].(string)
 			if err != nil {
 				log.Errorf("Failed to select option in element %s: %s", ele, err.Error())
@@ -160,8 +168,10 @@ var (
 				log.Errorf("Failed to select option(s) in element %s: %s", ref, err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to select option(s) in element %s: %s", ele, err.Error()))
 			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Select option(s) in element %s successfully", ele)), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: true})
 	}
 )
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/go-rod/rod-mcp/banner"
+	"github.com/go-rod/rod-mcp/types"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -11,6 +12,7 @@ import (
 type SubCfg struct {
 	Headless   bool
 	ConfigPath string
+	Mode       types.Mode
 }
 
 func RunCmd() (*SubCfg, error) {
@@ -39,6 +41,11 @@ func RunCmd() (*SubCfg, error) {
 				Aliases: []string{"nb"},
 				Usage:   "use to disable show banner",
 			},
+			&cli.BoolFlag{
+				Name:    "vision",
+				Aliases: []string{"vs"},
+				Usage:   "use to support vision LLM will load  vision tools",
+			},
 		},
 		Before: func(c *cli.Context) error {
 			if !c.Bool("no-banner") {
@@ -50,6 +57,10 @@ func RunCmd() (*SubCfg, error) {
 		Action: func(c *cli.Context) error {
 			if c.Bool("headless") {
 				subConfig.Headless = true
+			}
+
+			if c.Bool("vision") {
+				subConfig.Mode = types.Vision
 			}
 			return nil
 		},

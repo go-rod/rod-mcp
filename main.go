@@ -29,6 +29,10 @@ func main() {
 	if subCfg.Headless {
 		cfg.Headless = true
 	}
+	if subCfg.Mode != "" {
+		cfg.Mode = subCfg.Mode
+	}
+
 	runner := NewRunner(ctx, *cfg)
 	go func() {
 		c := make(chan os.Signal, 1)

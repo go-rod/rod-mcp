@@ -42,3 +42,13 @@ func OptionalStringArrayParam(r mcp.CallToolRequest, p string) ([]string, error)
 		return []string{}, fmt.Errorf("parameter %s could not be coerced to []string, is %T", p, r.Params.Arguments[p])
 	}
 }
+
+func MergeMaps[K comparable, V any](maps ...map[K]V) map[K]V {
+	result := make(map[K]V)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v // merged map,when the same key exists, the last one will be used
+		}
+	}
+	return result
+}

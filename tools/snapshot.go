@@ -168,5 +168,8 @@ var (
 var (
 	SnapshotToolHandlers = map[string]ToolHandler{
 		SnapshotToolKey: SnapshotHandler,
+		ClickToolKey:    ClickHandler,
+		FillToolKey:     FillHandler,
+		SelectorToolKey: SelectorHandler,
 	}
 )

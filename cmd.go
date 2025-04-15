@@ -31,7 +31,7 @@ func RunCmd() (*SubCfg, error) {
 				Destination: &subConfig.ConfigPath,
 			}, &cli.StringFlag{
 				Name:        "cdp-endpoint",
-				Aliases:     []string{"c"},
+				Aliases:     []string{"cdp"},
 				Usage:       "use to control running browser by cdp",
 				Destination: &subConfig.CDPEndpoint,
 			},

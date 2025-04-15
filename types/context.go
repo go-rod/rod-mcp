@@ -71,6 +71,17 @@ func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
 	return browser, nil
 }
 
+// Mode is the model type, indicates the model type of the tool
+type Mode string
+
+const (
+	// Vision mode indicates the vision ll model,will load the vision tools
+	Vision Mode = "vision"
+
+	// Text mode indicates the no vision ll model,will load the text tools
+	Text Mode = "text"
+)
+
 type Context struct {
 	stdContext context.Context
 	config     Config
@@ -79,12 +90,14 @@ type Context struct {
 	stateLock  sync.Mutex
 	isInitial  atomic.Bool
 	snapshot   *Snapshot
+	mode       Mode
 }
 
 func NewContext(ctx context.Context, cfg Config) *Context {
 	return &Context{
 		stdContext: ctx,
 		config:     cfg,
+		mode:       cfg.Mode,
 	}
 }
 
@@ -129,6 +142,10 @@ func (ctx *Context) initial() error {
 
 	return err
 
+}
+
+func (ctx *Context) CurrentMode() Mode {
+	return ctx.mode
 }
 
 func (ctx *Context) ClosePage() error {

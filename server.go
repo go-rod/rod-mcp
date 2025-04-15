@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/charmbracelet/log"
 	"github.com/go-rod/rod-mcp/tools"
 	"github.com/go-rod/rod-mcp/types"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -20,14 +21,19 @@ func NewServer(stdCtx context.Context, cfg types.Config) *Server {
 		ctx:       ctx,
 		mcpServer: mcpServer,
 	}
-	ser.registerTools(tools.CommonTools...)
+	switch ctx.CurrentMode() {
+	case types.Text:
+		ser.registerTools(tools.TextTools, tools.TextToolHandlers)
+	case types.Vision:
+	}
 	return ser
 
 }
 
-func (s *Server) registerTools(mcpTools ...mcp.Tool) *Server {
+func (s *Server) registerTools(mcpTools []mcp.Tool, handlers map[string]tools.ToolHandler) *Server {
 	for _, mt := range mcpTools {
-		if handlerFunc, ok := tools.CommonToolHandlers[mt.Name]; ok {
+		if handlerFunc, ok := handlers[mt.Name]; ok {
+			log.Debugf("register tool: %s", mt.Name)
 			s.mcpServer.AddTool(mt, handlerFunc(s.ctx))
 		}
 

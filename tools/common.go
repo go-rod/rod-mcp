@@ -10,6 +10,7 @@ import (
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/proto"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 	"os"
 	"path/filepath"
 	"time"
@@ -72,8 +73,8 @@ var (
 )
 
 var (
-	NavigationHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	NavigationHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			url := request.Params.Arguments["url"].(string)
 			if !utils.IsHttp(url) {
 				log.Errorf("Invalid URL: %s", url)
@@ -93,10 +94,11 @@ var (
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Navigated to %s", url)), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: rodCtx.CurrentMode() == types.Text})
 	}
 
-	GoBackHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	GoBackHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to go back: %s", err.Error())
@@ -110,10 +112,11 @@ var (
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Go back successfully"), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: rodCtx.CurrentMode() == types.Text})
 	}
 
-	GoForwardHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	GoForwardHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to go forward: %s", err.Error())
@@ -127,10 +130,11 @@ var (
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Go forward successfully"), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: rodCtx.CurrentMode() == types.Text})
 	}
 
-	ReLoadHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ReLoadHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to reload current page: %s", err.Error())
@@ -144,10 +148,11 @@ var (
 			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText("Reload current page successfully"), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: rodCtx.CurrentMode() == types.Text})
 	}
 
-	PressKeyHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	PressKeyHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to press key: %s", err.Error())
@@ -159,11 +164,13 @@ var (
 				log.Errorf("Failed to press key %s: %s", string(key), err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to press key %s: %s", string(key), err.Error()))
 			}
+			page.WaitDOMStable(defaultWaitStableDur, defaultDomDiff)
 			return mcp.NewToolResultText(fmt.Sprintf("Press key %s successfully", string(key))), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: rodCtx.CurrentMode() == types.Text})
 	}
-	CloseBrowserHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	CloseBrowserHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			err := rodCtx.CloseBrowser()
 			if err != nil {
 				log.Errorf("Failed to close browser: %s", err.Error())
@@ -171,9 +178,10 @@ var (
 			}
 			return mcp.NewToolResultText("Close browser successfully"), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: false})
 	}
-	EvaluateHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	EvaluateHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to evaluate: %s", err.Error())
@@ -190,9 +198,10 @@ var (
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Evaluate code successfully with result: %s", r.Result.Value.String())), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: false})
 	}
-	ScreenshotHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ScreenshotHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
+		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			page, err := rodCtx.EnsurePage()
 			if err != nil {
 				log.Errorf("Failed to screenshot: %s", err.Error())
@@ -213,6 +222,7 @@ var (
 			}
 			return mcp.NewToolResultText(fmt.Sprintf("Save to %s", filePath)), nil
 		}
+		return rodCtx.Execute(handler, types.ToolHandlerCallOpts{WitSnapshot: false})
 	}
 )
 

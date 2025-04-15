@@ -3,6 +3,8 @@ package types
 import (
 	"context"
 	"fmt"
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -152,6 +154,23 @@ func (ctx *Context) ClosePage() error {
 	ctx.stateLock.Lock()
 	defer ctx.stateLock.Unlock()
 	return ctx.closePage()
+}
+
+func (ctx *Context) Execute(handlerFunc server.ToolHandlerFunc, handlerCallOpts ToolHandlerCallOpts) server.ToolHandlerFunc {
+	return func(stdCtx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		result, err := handlerFunc(stdCtx, request)
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		if handlerCallOpts.WitSnapshot {
+			snapshot, _ := ctx.BuildSnapshot()
+			result.Content = append(result.Content, mcp.TextContent{
+				Type: "text",
+				Text: snapshot,
+			})
+		}
+		return result, nil
+	}
 }
 
 func (ctx *Context) BuildSnapshot() (string, error) {

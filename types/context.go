@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,6 +19,11 @@ import (
 )
 
 func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
+
+	if cfg.CDPEndpoint != "" {
+		return controlBrowser(ctx, cfg.CDPEndpoint)
+	}
+
 	if cfg.BrowserTempDir == "" {
 		cfg.BrowserTempDir = DefaultBrowserTempDir
 	}
@@ -55,20 +61,26 @@ func launchBrowser(ctx context.Context, cfg Config) (*rod.Browser, error) {
 		browserLauncher.Proxy(cfg.Proxy)
 	}
 
-	browser := rod.New().Context(ctx)
-
 	controlUrl, err := browserLauncher.Launch()
 	if err != nil {
 		return nil, errors.Wrap(err, "launch local browser failed")
 	}
+	browser, err := controlBrowser(ctx, controlUrl)
+	if err != nil {
+		return nil, err
+	}
+	return browser, nil
+}
 
-	err = browser.ControlURL(controlUrl).Connect()
+func controlBrowser(ctx context.Context, controlURL string) (*rod.Browser, error) {
+	browser := rod.New().Context(ctx)
+	err := browser.ControlURL(controlURL).Connect()
 	if err != nil {
 		err := browser.Close()
 		if err != nil {
-			return nil, errors.Wrap(err, "in connect local browser stage to close browser happened err")
+			return nil, errors.Wrap(err, "in connect browser stage to close browser happened err")
 		}
-		return nil, errors.Wrap(err, "Error connecting to local browser")
+		return nil, errors.Wrap(err, "Error connecting to browser")
 	}
 	return browser, nil
 }
@@ -248,5 +260,13 @@ func (ctx *Context) Close() error {
 	ctx.stateLock.Lock()
 	defer ctx.stateLock.Unlock()
 	ctx.closeBrowser()
+
+	// remove browser temp dir
+	if ctx.config.BrowserTempDir != "" && ctx.config.CDPEndpoint == "" {
+		err := os.RemoveAll(ctx.config.BrowserTempDir)
+		if err != nil {
+			return errors.Wrap(err, "remove browser temp dir failed")
+		}
+	}
 	return nil
 }

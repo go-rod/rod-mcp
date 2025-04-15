@@ -29,8 +29,13 @@ func main() {
 	if subCfg.Headless {
 		cfg.Headless = true
 	}
+
 	if subCfg.Mode != "" {
 		cfg.Mode = subCfg.Mode
+	}
+
+	if subCfg.CDPEndpoint != "" {
+		cfg.CDPEndpoint = subCfg.CDPEndpoint
 	}
 
 	runner := NewRunner(ctx, *cfg)

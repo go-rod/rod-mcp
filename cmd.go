@@ -10,9 +10,10 @@ import (
 )
 
 type SubCfg struct {
-	Headless   bool
-	ConfigPath string
-	Mode       types.Mode
+	Headless    bool
+	ConfigPath  string
+	Mode        types.Mode
+	CDPEndpoint string
 }
 
 func RunCmd() (*SubCfg, error) {
@@ -28,6 +29,11 @@ func RunCmd() (*SubCfg, error) {
 				Aliases:     []string{"c"},
 				Usage:       "use to set Rod MCP Server's config file path, file name is `rod-mcp.yaml`",
 				Destination: &subConfig.ConfigPath,
+			}, &cli.StringFlag{
+				Name:        "cdp-endpoint",
+				Aliases:     []string{"c"},
+				Usage:       "use to control running browser by cdp",
+				Destination: &subConfig.CDPEndpoint,
 			},
 			&cli.BoolFlag{
 				Name:        "headless",

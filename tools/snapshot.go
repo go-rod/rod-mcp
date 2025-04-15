@@ -172,4 +172,10 @@ var (
 		FillToolKey:     FillHandler,
 		SelectorToolKey: SelectorHandler,
 	}
+	Snapshots = []mcp.Tool{
+		Snapshot,
+		Click,
+		Fill,
+		Selector,
+	}
 )

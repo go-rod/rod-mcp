@@ -10,6 +10,6 @@ import (
 type ToolHandler = func(rodCtx *types.Context) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
 
 var (
-	TextTools        = append(CommonTools, Snapshot)
+	TextTools        = append(CommonTools, Snapshots...)
 	TextToolHandlers = utils.MergeMaps(CommonToolHandlers, SnapshotToolHandlers)
 )

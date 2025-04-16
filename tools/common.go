@@ -99,7 +99,7 @@ var (
 
 	GoBackHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to go back: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go back: %s", err.Error()))
@@ -117,7 +117,7 @@ var (
 
 	GoForwardHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to go forward: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to go forward: %s", err.Error()))
@@ -135,7 +135,7 @@ var (
 
 	ReLoadHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to reload current page: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to reload current page: %s", err.Error()))
@@ -153,7 +153,7 @@ var (
 
 	PressKeyHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to press key: %s", err.Error())
 				return nil, errors.New(fmt.Sprintf("Failed to press key: %s", err.Error()))
@@ -182,7 +182,7 @@ var (
 	}
 	EvaluateHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to evaluate: %s", err.Error())
 			}
@@ -202,7 +202,7 @@ var (
 	}
 	ScreenshotHandler = func(rodCtx *types.Context) server.ToolHandlerFunc {
 		handler := func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			page, err := rodCtx.EnsurePage()
+			page, err := rodCtx.ControlledPage()
 			if err != nil {
 				log.Errorf("Failed to screenshot: %s", err.Error())
 			}

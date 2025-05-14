@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/go-rod-rod-mcp-badge.png)](https://mseep.ai/app/go-rod-rod-mcp)
+
 # Rod MCP Server
 
 <div align="center">

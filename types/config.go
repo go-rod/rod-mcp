@@ -15,7 +15,6 @@ type Config struct {
 	Mode           Mode         `yaml:"mode" json:"mode"`
 	CDPEndpoint    string       `yaml:"cdpEndpoint" json:"cdpEndpoint"`
 	ServerName     string       `yaml:"serverName" json:"serverName"`
-	ServerVersion  string       `yaml:"-" json:"-"`
 	BrowserBinPath string       `yaml:"browserBinPath" json:"browserBinPath"`
 	Headless       bool         `yaml:"headless" json:"headless"`
 	BrowserTempDir string       `yaml:"browserTempDir" json:"browserTempDir"`

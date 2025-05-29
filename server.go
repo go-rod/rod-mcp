@@ -9,6 +9,8 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
+const VERSION = "1.0.0"
+
 type Server struct {
 	ctx       *types.Context
 	mcpServer *server.MCPServer
@@ -16,7 +18,7 @@ type Server struct {
 
 func NewServer(stdCtx context.Context, cfg types.Config) *Server {
 	ctx := types.NewContext(stdCtx, cfg)
-	mcpServer := server.NewMCPServer(cfg.ServerName, cfg.ServerVersion)
+	mcpServer := server.NewMCPServer(cfg.ServerName, VERSION)
 	ser := &Server{
 		ctx:       ctx,
 		mcpServer: mcpServer,
